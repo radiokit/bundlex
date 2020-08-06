@@ -50,17 +50,17 @@ defmodule Mix.Tasks.Compile.Bundlex do
       Output.info("Stored build script at #{File.cwd!() |> Path.join(filename)}")
     end
 
-    case build_script |> BuildScript.run(platform) do
+    case BuildScript.run(build_script, platform) do
       :ok ->
-        :ok
+        {:ok, []}
 
       {:error, {:run_build_script, return_code: ret, command: cmd}} ->
         Output.raise("Build script:\n\n#{cmd}\n\nreturned non-zero code: #{ret}")
+        {:error, []}
 
       {:error, reason} ->
         Output.raise("Error running build script, reason #{inspect(reason)}")
+        {:error, []}
     end
-
-    :ok
   end
 end
