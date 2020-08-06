@@ -6,14 +6,18 @@ defmodule Mix.Tasks.Compile.Bundlex do
   Accepts the following command line arguments:
   - `--store-scripts` - if set, shell scripts are stored in the project
   root folder for further analysis.
-  - `--dry-run` - does not build anything. Useful combined with `--store-scripts` option.
+  - `--store-compiledb` - if set, a compilation database
+  file (`compile_commands.json`) is create in the project root folder
+  - `--dry-run` - does not build anything. Useful combined with
+  `--store-scripts` option.
 
   Add `:bundlex` to compilers in your Mix project to have this task executed
   each time the project is compiled.
   """
 
   use Mix.Task.Compiler
-  alias Bundlex.{BuildScript, Native, Output, Platform, Project}
+  use Bunch
+  alias Bundlex.{BuildScript, CompilationDatabase, Native, Output, Platform, Project}
   alias Bundlex.Helper.MixHelper
 
   @impl true
@@ -48,6 +52,7 @@ defmodule Mix.Tasks.Compile.Bundlex do
         System.argv(),
         switches: [
           store_scripts: :boolean,
+          store_compiledb: :boolean,
           dry_run: :boolean
         ]
       )
@@ -55,6 +60,19 @@ defmodule Mix.Tasks.Compile.Bundlex do
     if cmdline_options[:store_scripts] do
       {:ok, {filename, _script}} = build_script |> BuildScript.store(platform)
       Output.info("Stored build script at #{File.cwd!() |> Path.join(filename)}")
+    end
+
+    if cmdline_options[:store_compiledb] do
+      withl new: {:ok, db} <- CompilationDatabase.new(commands),
+            store: {:ok, filename} <- CompilationDatabase.store(db) do
+        Output.info("Stored compilation database as #{File.cwd!() |> Path.join(filename)}")
+      else
+        new: {:error, reason} ->
+          Output.raise("Failed to generate compilation database:\n\n#{reason}")
+
+        store: {:error, reason} ->
+          Output.raise("Failed to create compile_commands.json:\n\n#{reason}")
+      end
     end
 
     if cmdline_options[:dry_run] do
