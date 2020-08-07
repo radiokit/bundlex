@@ -4,7 +4,7 @@ defmodule Bundlex.Toolchain.GCC do
   use Bundlex.Toolchain
   alias Bundlex.Toolchain.Common.{Unix, Compilers}
 
-  @compilers %Compilers{c: "gcc", cpp: "g++"}
+  def compilers, do: %Compilers{c: "gcc", cpp: "g++"}
 
   @impl Toolchain
   def compiler_commands(native, native_interface \\ nil) do
@@ -15,7 +15,7 @@ defmodule Bundlex.Toolchain.GCC do
         true -> {"", ""}
       end
 
-    compiler = @compilers |> Map.get(native.language)
+    compiler = compilers() |> Map.get(native.language)
 
     Unix.compiler_commands(
       native,
