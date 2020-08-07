@@ -16,7 +16,6 @@ defmodule Mix.Tasks.Compile.Bundlex do
   """
 
   use Mix.Task.Compiler
-  use Bunch
   alias Bundlex.{BuildScript, CompilationDatabase, Native, Output, Platform, Project}
   alias Bundlex.Helper.MixHelper
 
@@ -63,14 +62,13 @@ defmodule Mix.Tasks.Compile.Bundlex do
     end
 
     if cmdline_options[:store_compiledb] do
-      withl new: {:ok, db} <- CompilationDatabase.new(commands),
-            store: {:ok, filename} <- CompilationDatabase.store(db) do
-        Output.info("Stored compilation database as #{File.cwd!() |> Path.join(filename)}")
-      else
-        new: {:error, reason} ->
-          Output.raise("Failed to generate compilation database:\n\n#{reason}")
+      db = CompilationDatabase.new(commands)
 
-        store: {:error, reason} ->
+      case CompilationDatabase.store(db) do
+        {:ok, filename} ->
+          Output.info("Stored compilation database as #{File.cwd!() |> Path.join(filename)}")
+
+        {:error, reason} ->
           Output.raise("Failed to create compile_commands.json:\n\n#{reason}")
       end
     end
